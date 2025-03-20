@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Website</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .question {
+            font-size: 18px;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fff3cd;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .option {
+            margin: 5px;
+            padding: 10px;
+            width: 80%;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .option:hover {
+            background: #0056b3;
+        }
+        .option:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .timer {
+            font-size: 16px;
+            font-weight: bold;
+            color: red;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Quiz</h1>
+        <p>Select a category:</p>
+        <button onclick="startQuiz('html')">HTML</button>
+        <button onclick="startQuiz('java')">Java</button>
+        <button onclick="startQuiz('cpp')">C++</button>
+        
+        <div id="quiz-container" style="display:none;">
+            <div class="question" id="question-box"></div>
+            <div class="options" id="options-box"></div>
+            <p class="timer" id="timer-box"></p>
+            <p class="result" id="result-box"></p>
+        </div>
+    </div>
+
+    <script>
+        const quizData = {
+            html: [
+                { question: "What does HTML stand for?", options: ["Hyper Text Markup Language", "Hyper Transfer Markup Language", "Home Tool Markup Language"], answer: "Hyper Text Markup Language" },
+                { question: "Which tag is used for line break in HTML?", options: ["<br>", "<lb>", "<break>"], answer: "<br>" },
+                { question: "Which HTML element is used to define important text?", options: ["<strong>", "<b>", "<em>"], answer: "<strong>" },
+                { question: "Which tag is used to define a hyperlink?", options: ["<a>", "<link>", "<href>"], answer: "<a>" },
+                { question: "What is the default font size in HTML?", options: ["16px", "14px", "12px"], answer: "16px" }
+                // Add 15 more questions
+            ],
+            java: [
+                { question: "Who developed Java?", options: ["James Gosling", "Dennis Ritchie", "Guido van Rossum"], answer: "James Gosling" },
+                { question: "Which keyword is used to define a class in Java?", options: ["class", "Class", "define"], answer: "class" },
+                { question: "Which data type is used to store decimal values in Java?", options: ["float", "int", "boolean"], answer: "float" },
+                { question: "What is JVM?", options: ["Java Virtual Machine", "Java Variable Manager", "Java Version Manager"], answer: "Java Virtual Machine" },
+                { question: "Which operator is used for comparison in Java?", options: ["==", "=", "!="], answer: "==" }
+                // Add 15 more questions
+            ],
+            cpp: [
+                { question: "Who developed C++?", options: ["Bjarne Stroustrup", "James Gosling", "Dennis Ritchie"], answer: "Bjarne Stroustrup" },
+                { question: "Which operator is used to access members of a class in C++?", options: [".", "->", ":"], answer: "." },
+                { question: "What is the correct way to declare a pointer in C++?", options: ["int *ptr;", "ptr int*;", "*int ptr;"], answer: "int *ptr;" },
+                { question: "What is used for dynamic memory allocation in C++?", options: ["new", "malloc", "alloc"], answer: "new" },
+                { question: "What is the default return type of the main() function in C++?", options: ["int", "void", "float"], answer: "int" }
+                // Add 15 more questions
+            ]
+        };
+
+        let currentCategory = "";
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let level = 1;
+        let timer;
+        let totalQuestions = 10;
+
+        function startQuiz(category) {
+            currentCategory = category;
+            currentQuestionIndex = 0;
+            score = 0;
+            totalQuestions = 10 + (level - 1) * 5;
+            document.querySelector('.container').innerHTML = `
+                <h1>${category.toUpperCase()} Quiz</h1>
+                <div class="question" id="question-box"></div>
+                <div class="options" id="options-box"></div>
+                <p class="timer" id="timer-box"></p>
+                <p class="result" id="result-box"></p>
+            `;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= totalQuestions) {
+                if (score >= totalQuestions * 0.7) {
+                    level++;
+                    document.querySelector('.container').innerHTML = `
+                        <h1>Quiz Completed!</h1>
+                        <p>Your score: ${score} / ${totalQuestions}</p>
+                        <p>🎉 You passed! Level Up! 🎉</p>
+                        <button onclick="restartQuiz()">Next Level</button>
+                    `;
+                } else {
+                    document.querySelector('.container').innerHTML = `
+                        <h1>Quiz Completed!</h1>
+                        <p>Your score: ${score} / ${totalQuestions}</p>
+                        <p>❌ You failed! Try again.</p>
+                        <button onclick="restartQuiz()">Retry</button>
+                    `;
+                }
+                return;
+            }
+
+            const questions = quizData[currentCategory];
+            const currentQuestion = questions[currentQuestionIndex % questions.length];
+
+            document.getElementById("question-box").innerText = currentQuestion.question;
+
+            const optionsBox = document.getElementById("options-box");
+            optionsBox.innerHTML = "";
+
+            let shuffledOptions = [...currentQuestion.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement("button");
+                button.innerText = option;
+                button.classList.add("option");
+                button.onclick = () => checkAnswer(option, currentQuestion.answer);
+                optionsBox.appendChild(button);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            let timeLeft = 10;
+            document.getElementById("timer-box").innerText = `Time Left: ${timeLeft}s`;
+            clearInterval(timer);
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer-box").innerText = `Time Left: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    document.getElementById("result-box").innerText = "❌ Time's up!";
+                    disableOptions();
+                    setTimeout(nextQuestion, 2000);
+                }
+            }, 1000);
+        }
+
+        function checkAnswer(selected, correct) {
+            clearInterval(timer);
+            score += selected === correct ? 1 : 0;
+            document.getElementById("result-box").innerText = selected === correct ? "✅ Correct!" : "❌ Wrong!";
+            disableOptions();
+            setTimeout(nextQuestion, 2000);
+        }
+
+        function disableOptions() {
+            document.querySelectorAll(".option").forEach(button => button.disabled = true);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            document.getElementById("result-box").innerText = "";
+            loadQuestion();
+        }
+
+        function restartQuiz() {
+            startQuiz(currentCategory);
+        }
+    </script>
+</body>
+</html>
